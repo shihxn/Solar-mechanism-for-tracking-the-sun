@@ -1,0 +1,95 @@
+#include <ESP32Servo.h>
+
+Servo horizontalServo; // Servo motor for horizontal movement
+Servo verticalServo;   // Servo motor for vertical movement
+
+int ldrPins[] = {36, 39, 34, 35}; // LDR sensor pins
+int ldrValues[4];                  // Array to store LDR values
+
+void setup() {
+  horizontalServo.setPeriodHertz(50); // Standard 50Hz servo
+  horizontalServo.attach(2, 500, 2400); // Pin 2 for horizontal servo, pulse range 500-2400
+  verticalServo.setPeriodHertz(50); // Standard 50Hz servo
+  verticalServo.attach(4, 500, 2400); // Pin 4 for vertical servo, pulse range 500-2400
+
+  // Initialize serial communication for debugging
+  Serial.begin(9600);
+}
+
+void loop() {
+  readLDRValues();
+  trackSun();
+  delay(1000); // Delay for smoother operation
+}
+
+void readLDRValues() {
+  for (int i = 0; i < 4; i++) {
+    ldrValues[i] = analogRead(ldrPins[i]);
+    Serial.print("LDR ");
+    Serial.print(i);
+    Serial.print(": ");
+    Serial.println(ldrValues[i]);
+  }
+}
+
+void trackSun() {
+  int horizontalAngle, verticalAngle;
+  calculateAngles(horizontalAngle, verticalAngle);
+  
+  horizontalServo.write(horizontalAngle);
+  verticalServo.write(verticalAngle);
+
+  // Debugging
+  Serial.print("Horizontal Angle: ");
+  Serial.println(horizontalAngle);
+  Serial.print("Vertical Angle: ");
+  Serial.println(verticalAngle);
+}
+
+void calculateAngles(int& horizontalAngle, int& verticalAngle) {
+  // Calculate average LDR value
+  int averageLDR = (ldrValues[0] + ldrValues[1] + ldrValues[2] + ldrValues[3]) / 4;
+
+  // Find the index of the highest LDR value
+  int brightestIndex = 0;
+  for (int i = 1; i < 4; i++) {
+    if (ldrValues[i] > ldrValues[brightestIndex]) {
+      brightestIndex = i;
+    }
+  }
+
+  // Determine the brightest direction
+  if (brightestIndex == 0) { // Left
+    horizontalAngle = 90; // Adjust as necessary
+    verticalAngle = calculateVerticalAngle(ldrValues[1], ldrValues[2]);
+  } else if (brightestIndex == 1) { // Top
+    verticalAngle = 90; // Adjust as necessary
+    horizontalAngle = calculateHorizontalAngle(ldrValues[0], ldrValues[3]);
+  } else if (brightestIndex == 2) { // Right
+    horizontalAngle = 180; // Adjust as necessary
+    verticalAngle = calculateVerticalAngle(ldrValues[0], ldrValues[3]);
+  } else if (brightestIndex == 3) { // Bottom
+    verticalAngle = 0; // Adjust as necessary
+    horizontalAngle = calculateHorizontalAngle(ldrValues[1], ldrValues[2]);
+  }
+}
+
+int calculateHorizontalAngle(int leftLDR, int rightLDR) {
+  // Calculate the difference between left and right LDR values
+  int difference = leftLDR - rightLDR;
+  // Map the difference to an angle range (0 to 180)
+  int angle = mapValue(difference, -1023, 1023, 0, 180);
+  return angle;
+}
+
+int calculateVerticalAngle(int topLDR, int bottomLDR) {
+  // Calculate the difference between top and bottom LDR values
+  int difference = topLDR - bottomLDR;
+  // Map the difference to an angle range (0 to 180)
+  int angle = mapValue(difference, -1023, 1023, 0, 180);
+  return angle;
+}
+
+int mapValue(int value, int fromLow, int fromHigh, int toLow, int toHigh) {
+  return (value - fromLow) * (toHigh - toLow) / (fromHigh - fromLow) + toLow;
+}
