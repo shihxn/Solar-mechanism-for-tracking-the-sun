@@ -1,0 +1,18 @@
+#define ACS712_PIN A0 // Analog pin connected to ACS712 output
+
+void setup() {
+  Serial.begin(115200);
+}
+
+void loop() {
+  int sensorValue = analogRead(ACS712_PIN);
+  
+  // Convert analog value to current (in milliamps)
+  float current_mA = map(sensorValue, 0, 4095, -30, 30); // ACS712 sensitivity is 66mV/A, and the range is +/-30A
+  
+  Serial.print("Current: ");
+  Serial.print(current_mA);
+  Serial.println(" mA");
+  
+  delay(1000); // Delay for stability
+}
