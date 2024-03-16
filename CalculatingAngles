@@ -1,0 +1,45 @@
+def calculate_angles(ldr_values):
+    # Calculate average LDR value
+    average_ldr = sum(ldr_values) / len(ldr_values)
+
+    # Find the index of the highest LDR value
+    brightest_index = ldr_values.index(max(ldr_values))
+
+    # Determine the brightest direction
+    if brightest_index == 0:  # Left
+        horizontal_angle = 90  # Adjust as necessary
+        vertical_angle = calculate_vertical_angle(ldr_values[1], ldr_values[2])
+    elif brightest_index == 1:  # Top
+        vertical_angle = 90  # Adjust as necessary
+        horizontal_angle = calculate_horizontal_angle(ldr_values[0], ldr_values[3])
+    elif brightest_index == 2:  # Right
+        horizontal_angle = 180  # Adjust as necessary
+        vertical_angle = calculate_vertical_angle(ldr_values[0], ldr_values[3])
+    elif brightest_index == 3:  # Bottom
+        vertical_angle = 0  # Adjust as necessary
+        horizontal_angle = calculate_horizontal_angle(ldr_values[1], ldr_values[2])
+
+    return horizontal_angle, vertical_angle
+
+def calculate_horizontal_angle(left_ldr, right_ldr):
+    # Calculate the difference between left and right LDR values
+    difference = left_ldr - right_ldr
+    # Map the difference to an angle range (-90 to 90)
+    angle = map_value(difference, -1023, 1023, -90, 90)
+    return angle
+
+def calculate_vertical_angle(top_ldr, bottom_ldr):
+    # Calculate the difference between top and bottom LDR values
+    difference = top_ldr - bottom_ldr
+    # Map the difference to an angle range (-90 to 90)
+    angle = map_value(difference, -1023, 1023, -90, 90)
+    return angle
+
+def map_value(value, from_low, from_high, to_low, to_high):
+    return (value - from_low) * (to_high - to_low) / (from_high - from_low) + to_low
+
+# Example usage
+ldr_values = [100, 200, 300, 400]  # Replace with actual LDR readings
+horizontal_angle, vertical_angle = calculate_angles(ldr_values)
+print("Horizontal Angle:", horizontal_angle)
+print("Vertical Angle:", vertical_angle)
